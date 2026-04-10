@@ -2,10 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble';
 import { sendChatMessage, transcribeAudio } from '../api/chatApi';
 
-/**
- * ChatWindow – main chat area with message list, input box,
- * loading spinner, and error display.
- */
+const SUGGESTED_QUESTIONS = [
+    { icon: '💻', text: 'Tin công nghệ mới nhất từ 3 báo' },
+    { icon: '📈', text: 'Điểm tin kinh tế trong tuần qua' },
+    { icon: '🌏', text: 'Tin thế giới đáng chú ý hôm nay' },
+    { icon: '⚽', text: 'Tổng hợp tin thể thao nổi bật' },
+];
+
 export default function ChatWindow({ chatId, filters, messages, onMessagesChange }) {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -26,12 +29,8 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
     const safeMessages = Array.isArray(messages) ? messages : [];
     const isEmptyState = safeMessages.length === 1 && !isLoading;
 
-    useEffect(() => {
-        messagesRef.current = safeMessages;
-    }, [safeMessages]);
+    useEffect(() => { messagesRef.current = safeMessages; }, [safeMessages]);
 
-    // Reset transient UI state when switching chat sessions.
-    // (The chat session is identified by the message array changing dramatically.)
     useEffect(() => {
         setError(null);
         setIsLoading(false);
@@ -39,25 +38,21 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
         shouldAutoScrollRef.current = true;
     }, [chatId]);
 
-    // Auto-scroll only if user is already near the bottom. This avoids layout "jumping"
-    // when banners/toasts appear or when the user scrolls up to read older messages.
     useEffect(() => {
         if (!shouldAutoScrollRef.current) return;
         const el = scrollRef.current;
         if (!el) return;
-        el.scrollTo({ top: el.scrollHeight, behavior: 'auto' });
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }, [safeMessages, isLoading]);
 
-    // Focus input on mount
     useEffect(() => {
-        inputRef.current?.focus();
+        setTimeout(() => inputRef.current?.focus(), 50);
     }, []);
 
     async function handleSend() {
         const question = input.trim();
         if (!question || isLoading) return;
 
-        // Add user message
         const userMsg = {
             id: `user-${Date.now()}`,
             role: 'user',
@@ -76,7 +71,6 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
                 sources: filters.sources,
                 categories: filters.categories,
             });
-
             const botMsg = {
                 id: `bot-${Date.now()}`,
                 role: 'bot',
@@ -92,7 +86,7 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
             setError(_formatError(err));
         } finally {
             setIsLoading(false);
-            inputRef.current?.focus();
+            setTimeout(() => inputRef.current?.focus(), 50);
         }
     }
 
@@ -159,37 +153,27 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
     function handleScroll() {
         const el = scrollRef.current;
         if (!el) return;
-        const distanceToBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
-        shouldAutoScrollRef.current = distanceToBottom < 120;
+        shouldAutoScrollRef.current = el.scrollHeight - (el.scrollTop + el.clientHeight) < 120;
     }
 
     return (
         <div className="flex flex-col h-full relative">
-            {/* ── Message list ──────────────────────────────────── */}
+            {/* ── Message list ── */}
             <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-4 py-5 pb-28"
+                className="flex-1 overflow-y-auto px-4 py-6 pb-32"
                 id="chat-messages"
             >
-                <div className="max-w-4xl mx-auto min-h-full flex flex-col">
-                    <div className={`${isEmptyState ? 'flex-1 flex flex-col justify-center space-y-5 py-6' : 'space-y-5'}`}>
-                        {hasActiveFilters && !isEmptyState && (
-                            <div className="sticky top-3 z-10">
-                                <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] backdrop-blur-md px-4 py-2.5 shadow-[var(--shadow-sm)]">
-                                    <p className="text-xs text-[var(--text-secondary)]">
-                                        Đang áp dụng bộ lọc. Nếu kết quả quá ít, hãy thử bớt lọc ở Sidebar.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+                <div className="max-w-3xl mx-auto min-h-full flex flex-col">
+                    <div className={`${isEmptyState ? 'flex-1 flex flex-col justify-center space-y-6 py-8' : 'space-y-6'}`}>
 
-                        {hasActiveFilters && isEmptyState && (
-                            <div className="animate-fadeInUp">
-                                <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-elevated)] backdrop-blur-md px-4 py-2.5 shadow-[var(--shadow-sm)]">
-                                    <p className="text-xs text-[var(--text-secondary)]">
-                                        Đang áp dụng bộ lọc. Nếu kết quả quá ít, hãy thử bớt lọc ở Sidebar.
-                                    </p>
+                        {/* Filter notice */}
+                        {hasActiveFilters && !isEmptyState && (
+                            <div className="sticky top-2 z-10 animate-fadeInUp">
+                                <div className="glass-card rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-[var(--shadow-sm)]">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                    <p className="text-xs text-[var(--text-secondary)]">Đang lọc theo nguồn / chủ đề đã chọn.</p>
                                 </div>
                             </div>
                         )}
@@ -198,38 +182,58 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
                             <MessageBubble key={msg.id} message={msg} />
                         ))}
 
-                        {/* Suggested prompts */}
+                        {/* Empty-state: suggested prompts */}
                         {isEmptyState && (
-                            <div className="animate-fadeInUp">
-                                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-                                    Gợi ý nhanh
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {SUGGESTED_QUESTIONS.map((q) => (
-                                        <button
-                                            key={q}
-                                            type="button"
-                                            onClick={() => {
-                                                setInput(q);
-                                                inputRef.current?.focus();
-                                            }}
-                                            className="text-sm px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-elevated)] backdrop-blur-md hover:bg-[var(--bg-secondary)] transition-colors shadow-[var(--shadow-sm)] focus:ring-2 focus:ring-[var(--ring)]"
-                                        >
-                                            {q}
-                                        </button>
-                                    ))}
+                            <div className="animate-fadeInUp space-y-4">
+                                {hasActiveFilters && (
+                                    <div className="glass-card rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-[var(--shadow-sm)]">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                        <p className="text-xs text-[var(--text-secondary)]">Đang lọc theo nguồn / chủ đề đã chọn.</p>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-3 px-1">
+                                        ✨ Gợi ý nhanh
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        {SUGGESTED_QUESTIONS.map((q) => (
+                                            <button
+                                                key={q.text}
+                                                type="button"
+                                                onClick={() => { setInput(q.text); inputRef.current?.focus(); }}
+                                                className="flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)]/30 hover:shadow-[var(--shadow-md)] transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-[var(--ring)] shadow-[var(--shadow-xs)]"
+                                            >
+                                                <span className="text-xl leading-none">{q.icon}</span>
+                                                <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors font-medium">{q.text}</span>
+                                                <svg className="ml-auto opacity-0 group-hover:opacity-60 transition-opacity flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         {/* Loading indicator */}
                         {isLoading && (
-                            <div className="flex justify-start animate-fadeInUp" id="loading-indicator">
-                                <div className="bg-[var(--bg-elevated)] backdrop-blur-md border border-[var(--border-color)] rounded-2xl rounded-bl-md px-5 py-3.5 flex items-center gap-2 shadow-[var(--shadow-sm)]">
-                                    <span className="typing-dot"></span>
-                                    <span className="typing-dot"></span>
-                                    <span className="typing-dot"></span>
-                                    <span className="text-xs text-[var(--text-muted)] ml-2">Đang xử lý...</span>
+                            <div className="flex gap-3 animate-fadeInUp" id="loading-indicator">
+                                {/* Bot avatar */}
+                                <div className="flex-shrink-0 mt-0.5 w-8 h-8 rounded-xl bg-[var(--accent-soft)] border border-[var(--accent)]/20 flex items-center justify-center">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 2a9 9 0 0 1 9 9 9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9z"/>
+                                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                                    </svg>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <p className="text-[10px] font-semibold text-[var(--text-muted)]">Trợ lý AI</p>
+                                    <div className="bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-2 shadow-[var(--shadow-sm)]">
+                                        <span className="typing-dot" />
+                                        <span className="typing-dot" />
+                                        <span className="typing-dot" />
+                                        <span className="text-xs text-[var(--text-muted)] ml-1">Đang phân tích và tìm kiếm...</span>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -239,30 +243,22 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
                 </div>
             </div>
 
-            {/* Error overlay (absolute so it never changes layout height) */}
+            {/* ── Error toast ── */}
             {error && (
-                <div className="pointer-events-none absolute left-0 right-0 bottom-24 px-4 z-20">
-                    <div className="max-w-4xl mx-auto">
-                        <div
-                            className="pointer-events-auto rounded-2xl border border-red-200 dark:border-red-800 bg-red-50/90 dark:bg-red-950/35 backdrop-blur-md px-4 py-3 shadow-[var(--shadow-sm)] flex items-start justify-between gap-3 animate-fadeInUp"
-                            id="error-banner"
-                        >
-                            <div className="min-w-0">
-                                <p className="text-xs font-semibold text-red-700 dark:text-red-300">
-                                    Không thể tải dữ liệu
-                                </p>
-                                <p className="text-xs text-red-700/80 dark:text-red-300/80 mt-0.5 break-words">
-                                    {error}
-                                </p>
+                <div className="pointer-events-none absolute left-0 right-0 bottom-28 px-4 z-20">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="pointer-events-auto glass-card rounded-2xl border border-red-200/60 dark:border-red-800/50 bg-red-50/90 dark:bg-red-950/40 px-4 py-3 shadow-[var(--shadow-md)] flex items-start justify-between gap-3 animate-fadeInUp" id="error-banner">
+                            <div className="flex items-start gap-2.5 min-w-0">
+                                <div className="mt-0.5 w-5 h-5 rounded-full bg-red-500 flex-shrink-0 flex items-center justify-center">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-red-700 dark:text-red-300">Không thể tải dữ liệu</p>
+                                    <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-0.5">{error}</p>
+                                </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setError(null)}
-                                className="shrink-0 rounded-xl px-2 py-1 text-red-700/70 hover:text-red-700 dark:text-red-300/70 dark:hover:text-red-300 hover:bg-red-100/60 dark:hover:bg-red-900/30 transition-colors focus:ring-2 focus:ring-[var(--ring)]"
-                                aria-label="Đóng thông báo lỗi"
-                                title="Đóng"
-                            >
-                                x
+                            <button type="button" onClick={() => setError(null)} className="shrink-0 p-1.5 rounded-xl hover:bg-red-100/60 dark:hover:bg-red-900/30 text-red-400 hover:text-red-600 transition-colors" aria-label="Đóng">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
                             </button>
                         </div>
                     </div>
@@ -372,26 +368,13 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
     );
 }
 
-/* ── Helper ───────────────────────────────────────────────── */
-
 function _now() {
-    return new Date().toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 }
-
-const SUGGESTED_QUESTIONS = [
-    'Tổng hợp tin công nghệ mới nhất từ 3 báo',
-    'Điểm tin kinh tế trong tuần qua',
-    'Tin thế giới đáng chú ý nhất hôm nay là gì?',
-    'Cho tôi các tin thể thao nổi bật gần đây',
-];
 
 function _formatError(err) {
     const raw = (err && typeof err === 'object' && 'message' in err) ? String(err.message) : '';
     const msg = raw.trim();
-
     if (!msg) return 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';
     if (/load failed/i.test(msg)) return 'Kết nối thất bại. Vui lòng kiểm tra backend và thử lại.';
     if (/failed to fetch/i.test(msg)) return 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';

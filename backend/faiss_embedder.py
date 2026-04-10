@@ -308,3 +308,64 @@ def clear_index():
             os.remove(str(file_path))
 
     logger.info("Cleared FAISS index and deleted stored data")
+
+
+def get_all_articles() -> list[Article]:
+    """Reconstruct all articles from the FAISS index metadata."""
+    global _documents, _metadatas
+    if not _metadatas or not _documents:
+        return []
+
+    # Group chunks by URL
+    articles_dict = {}
+    for idx, meta in enumerate(_metadatas):
+        url = meta.get("url")
+        if not url:
+            continue
+        if url not in articles_dict:
+            articles_dict[url] = {
+                "title": meta.get("title", ""),
+                "url": url,
+                "source": meta.get("source", ""),
+                "category": meta.get("category", ""),
+                "published_at": meta.get("published_at", ""),
+                "crawled_at": meta.get("crawled_at", ""),
+                "chunks": []
+            }
+        # Append chunk with its index
+        if idx < len(_documents):
+            articles_dict[url]["chunks"].append((meta.get("chunk_index", 0), _documents[idx]))
+
+    # Sort chunks by chunk_index for each article and concatenate
+    articles = []
+    for data in articles_dict.values():
+        sorted_chunks = sorted(data["chunks"], key=lambda x: x[0])
+        content = " ".join(chunk_text for _, chunk_text in sorted_chunks)
+        # Parse datetime strings
+        published_at = None
+        if data["published_at"]:
+            try:
+                published_at = datetime.fromisoformat(data["published_at"])
+            except Exception:
+                published_at = None
+        crawled_at = None
+        if data["crawled_at"]:
+            try:
+                crawled_at = datetime.fromisoformat(data["crawled_at"])
+            except Exception:
+                crawled_at = datetime.utcnow()
+        else:
+            crawled_at = datetime.utcnow()
+
+        article = Article(
+            title=data["title"],
+            content=content,
+            url=data["url"],
+            source=data["source"],
+            category=data["category"],
+            published_at=published_at,
+            crawled_at=crawled_at
+        )
+        articles.append(article)
+
+    return articles

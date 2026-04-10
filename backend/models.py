@@ -41,38 +41,3 @@ class StatsResponse(BaseModel):
     last_crawled_at: Optional[str] = None
     sources_breakdown: dict[str, int] = Field(default_factory=dict)
     categories_breakdown: dict[str, int] = Field(default_factory=dict)
-
-
-class FinanceAnalysisRequest(BaseModel):
-    question: str
-
-
-class FinanceEntity(BaseModel):
-    stocks: list[str] = Field(default_factory=list)
-    companies: list[str] = Field(default_factory=list)
-    metrics: list[str] = Field(default_factory=list)
-
-
-class FinanceAnalysisResponse(BaseModel):
-    is_finance_related: bool
-    entities: FinanceEntity
-    sentiment: str = "trung tính"
-
-
-class TrendItem(BaseModel):
-    keyword: str
-    count: int
-
-
-class FinanceTrendsResponse(BaseModel):
-    trends: list[TrendItem] = Field(default_factory=list)
-    total_articles: int = 0
-
-
-class SentimentRequest(BaseModel):
-    text: str
-
-
-class SentimentResponse(BaseModel):
-    sentiment: str
-    confidence: float = 0.0

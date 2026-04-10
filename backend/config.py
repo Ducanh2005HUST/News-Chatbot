@@ -31,9 +31,9 @@ LLM_TEMPERATURE = 0.3
 CHUNK_SIZE = 300         # approximate tokens per chunk
 CHUNK_OVERLAP = 50       # overlap tokens between chunks
 
-SIMPLE_TOP_K = 3
-MULTI_TOP_K = 15
-SIMILARITY_THRESHOLD = 0.7
+SIMPLE_TOP_K = 8
+MULTI_TOP_K = 20
+SIMILARITY_THRESHOLD = 0.25
 
 RSS_FEEDS = [
     # VnExpress

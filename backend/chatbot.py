@@ -169,11 +169,10 @@ def chat(request: ChatRequest) -> ChatResponse:
     # decide retrieval parameters
     if intent == "multi_source":
         top_k = config.MULTI_TOP_K
-        # lower threshold for broader coverage
-        threshold = 0.25
+        threshold = 0.20   # broader coverage for synthesis
     else:
         top_k = config.SIMPLE_TOP_K
-        threshold = 0.35
+        threshold = 0.25   # was 0.35, logs show scores ~0.47 which is normal
 
     # apply user filters
     sources = request.filters.sources or None

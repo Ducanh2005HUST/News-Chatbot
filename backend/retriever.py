@@ -81,16 +81,20 @@ def retrieve(
     # Search in FAISS
     try:
         if len(filtered_indices) < count:
-            # Need to search subset
+            # Search subset: compute cosine similarity by brute-force dot product
+            # against the filtered embeddings
             subset_embeddings = np.array(
                 [_index.reconstruct(i) for i in filtered_indices], dtype=np.float32
-            )
-            distances, indices = _index.search(
-                subset_embeddings, min(top_k, len(filtered_indices))
-            )
-            # Map back to original indices
-            original_indices = [filtered_indices[i] for i in indices[0]]
-            distances = distances[0]
+            )  # shape: (n_filtered, dim)
+
+            # query_normalized: (1, dim) → dot product → (n_filtered,)
+            sims = (subset_embeddings @ query_normalized.T).flatten()  # cosine sim
+
+            # Take top_k by similarity (descending)
+            k = min(top_k, len(filtered_indices))
+            top_local = np.argsort(sims)[::-1][:k]
+            original_indices = [filtered_indices[j] for j in top_local]
+            distances = sims[top_local]
         else:
             # Search entire index
             distances, indices = _index.search(
