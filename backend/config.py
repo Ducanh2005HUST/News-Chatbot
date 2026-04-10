@@ -11,6 +11,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 CHROMA_PATH = os.getenv("CHROMA_PATH", str(BASE_DIR / "chroma_data"))
+FAISS_PATH = os.getenv("FAISS_PATH", str(BASE_DIR / "faiss_data"))
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")

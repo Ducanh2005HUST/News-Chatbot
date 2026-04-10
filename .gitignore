@@ -50,6 +50,8 @@ venv.bak/
 
 backend/chroma_data/
 chroma_data/
+backend/faiss_data/
+faiss_data/
 *.db
 *.sqlite3
 
@@ -67,3 +69,7 @@ build/
 
 logs
 *.log
+
+.claude/
+claude.md
+claudeignore

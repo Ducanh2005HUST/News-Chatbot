@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
+import FinanceDashboard from './components/FinanceDashboard';
 import {
     initStore,
     listChats,
@@ -35,6 +36,7 @@ export default function App() {
         return loadIndexOrNull();
     });
     const [activeMessages, setActiveMessages] = useState(() => WELCOME_MESSAGES);
+const [activeTab, setActiveTab] = useState('chat');
 
     // Apply dark class to <html>
     useEffect(() => {

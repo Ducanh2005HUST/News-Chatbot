@@ -40,12 +40,17 @@ def _crawl_and_embed() -> None:
             _total_articles,
         )
     except Exception as exc:
-        logger.error("Crawl+embed cycle failed: %s", exc)
+        import traceback
+        logger.error("Crawl+embed cycle failed: %s\\n%s", exc, traceback.format_exc())
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     config.setup_logging()
     logger.info("Dang khoi dong Chatbot Tin tuc RAG ...")
+
+    # Initialize FAISS index and load existing data
+    from faiss_embedder import init_index
+    init_index()
 
     initial_thread = Thread(target=_crawl_and_embed, daemon=True)
     initial_thread.start()
