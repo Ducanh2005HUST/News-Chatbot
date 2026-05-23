@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import logging
+import functools
 from contextlib import asynccontextmanager
 from datetime import datetime
 from threading import Thread
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
@@ -14,6 +16,7 @@ from chatbot import chat
 from crawler import run_crawl
 from embedder import embed_articles, get_stats
 from models import ChatRequest, ChatResponse, StatsResponse
+from stt_engine import transcribe_audio
 
 logger = logging.getLogger("server")
 
@@ -115,3 +118,34 @@ async def stats_endpoint():
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "version": "1.0.0"}
+
+
+@app.post("/stt")
+async def speech_to_text(file: UploadFile = File(...)):
+    """
+    Nhận file audio từ Frontend (WebM / WAV),
+    gửi lên OpenAI Whisper API và trả về transcript tiếng Việt.
+    """
+    audio_bytes = await file.read()
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="File audio rỗng.")
+
+    try:
+        # transcribe_audio là blocking I/O (gọi OpenAI qua HTTP).
+        # Dùng run_in_executor để không block asyncio event loop.
+        loop = asyncio.get_event_loop()
+        text = await loop.run_in_executor(
+            None,
+            functools.partial(transcribe_audio, audio_bytes)
+        )
+        return {"text": text}
+    except RuntimeError as exc:
+        logger.error("STT config lỗi: %s", exc)
+        raise HTTPException(status_code=503, detail=str(exc))
+    except ValueError as exc:
+        logger.warning("STT input lỗi: %s", exc)
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.error("STT endpoint lỗi: %s", exc)
+        raise HTTPException(status_code=500, detail="Không thể xử lý audio. Vui lòng thử lại.")
+

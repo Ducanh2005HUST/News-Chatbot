@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Data/model cache – không cần trong image, được mount qua volume
+chroma_data/
+*.db
+
+# Logs
+*.log
+logs/
+
+# Dev-only
+.env.local
