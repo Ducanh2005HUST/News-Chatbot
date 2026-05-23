@@ -1,0 +1,12 @@
+# Node modules – sẽ được install trong image
+node_modules/
+npm-debug.log*
+
+# Build output
+dist/
+build/
+.output/
+
+# Dev files
+.env.local
+*.log

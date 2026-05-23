@@ -1,4 +1,7 @@
-const API_BASE = 'http://localhost:8000';
+// Trong Docker: nginx proxy /chat, /stats, /health, /stt về backend → dùng URL tương đối (empty).
+// Trong dev local: Vite proxy cũng handle → vẫn dùng empty.
+// Nếu muốn override (e.g., staging), set VITE_API_BASE trong .env
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 /**
  * Send a chat question to the backend RAG pipeline.
@@ -41,4 +44,31 @@ export async function fetchStats() {
     }
 
     return response.json();
+}
+
+/**
+ * Gửi file audio lên backend để chạy STT local (faster-whisper).
+ * @param {Blob} audioBlob  – Audio blob từ MediaRecorder (WebM/WAV)
+ * @returns {Promise<string>} – Text đã nhận dạng
+ */
+export async function transcribeAudio(audioBlob) {
+    const formData = new FormData();
+    // Backend FastAPI nhận field tên "file"
+    // Gửi với extension .webm – MediaRecorder mặc định xuất audio/webm.
+    // Backend sẽ tự detect magic bytes nếu cần, nhưng đặt tên đúng giúp Whisper API hint codec.
+    formData.append('file', audioBlob, 'recording.webm');
+
+    const response = await fetch(`${API_BASE}/stt`, {
+        method: 'POST',
+        body: formData,
+        // KHÔNG set Content-Type header – trình duyệt tự set boundary cho multipart
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `STT error (${response.status})`);
+    }
+
+    const data = await response.json();
+    return data.text || '';
 }

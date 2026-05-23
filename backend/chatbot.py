@@ -13,25 +13,32 @@ from retriever import retrieve
 
 logger = logging.getLogger("chatbot")
 
-MULTI_SOURCE_KEYWORDS = [
-    "tong hop", "tổng hợp",
-    "tom tat", "tóm tắt",
-    "so sanh", "so sánh",
-    "nhieu bao", "nhiều báo",
-    "tuan qua", "tuần qua",
-    "thang qua", "tháng qua",
-    "tong quan", "tổng quan",
-    "diem tin", "điểm tin",
-    "cac bao", "các báo",
-    "cac nguon", "các nguồn",
-    "phan tich", "phân tích",
-]
+import os
 
+KEYWORDS_FILE = os.path.join(os.path.dirname(__file__), "multi_source_keywords.txt")
+
+def _load_keywords() -> list[str]:
+    """Load keywords from external file, fallback to default list."""
+    if os.path.exists(KEYWORDS_FILE):
+        with open(KEYWORDS_FILE, "r", encoding="utf-8") as f:
+            return [line.strip().lower() for line in f if line.strip() and not line.startswith("#")]
+    
+    return [
+        "tong hop", "tổng hợp", "tom tat", "tóm tắt", "so sanh", "so sánh",
+        "nhieu bao", "nhiều báo", "tuan qua", "tuần qua", "thang qua", "tháng qua",
+        "tong quan", "tổng quan", "diem tin", "điểm tin", "cac bao", "các báo",
+        "cac nguon", "các nguồn", "phan tich", "phân tích"
+    ]
+
+# Load 1 lần khi import module (cache lại)
+_MULTI_SOURCE_KEYWORDS = _load_keywords()
 
 def _detect_intent(question: str) -> str:
-    """Return 'multi_source' if question asks for synthesis, else 'simple'."""
+    """Return 'multi_source' if question asks for synthesis, else 'simple'.
+       If you want to support hot-reload, call _load_keywords() dynamically here instead of caching.
+    """
     q_lower = question.lower()
-    for kw in MULTI_SOURCE_KEYWORDS:
+    for kw in _MULTI_SOURCE_KEYWORDS:
         if kw in q_lower:
             return "multi_source"
     return "simple"

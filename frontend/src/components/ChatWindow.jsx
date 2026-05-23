@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble';
-import { sendChatMessage } from '../api/chatApi';
+import { sendChatMessage, transcribeAudio } from '../api/chatApi';
 
 /**
  * ChatWindow – main chat area with message list, input box,
@@ -10,6 +10,12 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    // --- STT states ---
+    const [isRecording, setIsRecording] = useState(false);
+    const [isTranscribing, setIsTranscribing] = useState(false);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    // ------------------
     const scrollRef = useRef(null);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
@@ -96,6 +102,59 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
             handleSend();
         }
     }
+
+    // ── Microphone / STT logic ────────────────────────────────────
+    async function handleMicToggle() {
+        // Nếu đang ghi âm -> dừng lại và gửi lên STT
+        if (isRecording) {
+            mediaRecorderRef.current?.stop();
+            return;
+        }
+
+        // Xin quyền Mic
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch {
+            setError('Trình duyệt không thể truy cập Microphone. Hãy kiểm tra quyền truy cập.');
+            return;
+        }
+
+        audioChunksRef.current = [];
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunksRef.current.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+            // Dừng tất cả track mic
+            stream.getTracks().forEach((t) => t.stop());
+            setIsRecording(false);
+
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            if (audioBlob.size < 1000) return; // quá ngắn, bỏ qua
+
+            setIsTranscribing(true);
+            try {
+                const text = await transcribeAudio(audioBlob);
+                if (text) {
+                    setInput((prev) => prev ? `${prev} ${text}` : text);
+                    inputRef.current?.focus();
+                }
+            } catch (err) {
+                setError('Nhận dạng giọng nói thất bại. Vui lòng thử lại.');
+                console.error('STT error:', err);
+            } finally {
+                setIsTranscribing(false);
+            }
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+    }
+    // ─────────────────────────────────────────────────────────────
 
     function handleScroll() {
         const el = scrollRef.current;
@@ -221,7 +280,7 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Nhập câu hỏi về tin tức..."
-                        disabled={isLoading}
+                        disabled={isLoading || isTranscribing}
                         className="
               flex-1 resize-none px-4 py-3 rounded-2xl
               bg-[var(--bg-secondary)] text-[var(--text-primary)]
@@ -238,6 +297,42 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
                             e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
                         }}
                     />
+
+                    {/* ── Nút Microphone ── */}
+                    <button
+                        id="mic-btn"
+                        type="button"
+                        onClick={handleMicToggle}
+                        disabled={isLoading || isTranscribing}
+                        title={isRecording ? 'Dừng ghi âm' : 'Ghi âm bằng giọng nói'}
+                        aria-label={isRecording ? 'Dừng ghi âm' : 'Bắt đầu ghi âm'}
+                        className={`
+              px-3 py-3 rounded-2xl text-sm font-medium
+              transition-all duration-200 active:scale-95
+              shadow-[var(--shadow-sm)] focus:ring-2 focus:ring-[var(--ring)]
+              disabled:opacity-40 disabled:cursor-not-allowed
+              ${
+                                isRecording
+                                    ? 'bg-red-500 text-white animate-pulse'
+                                    : isTranscribing
+                                        ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-wait'
+                                        : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-elevated)] hover:text-[var(--accent)]'
+                            }
+            `}
+                    >
+                        {isTranscribing ? (
+                            // Spinner khi đang transcribe
+                            <span className="inline-block w-5 h-5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                        ) : (
+                            // Icon mic SVG
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                <line x1="12" y1="19" x2="12" y2="23" />
+                                <line x1="8" y1="23" x2="16" y2="23" />
+                            </svg>
+                        )}
+                    </button>
                     <button
                         id="send-btn"
                         onClick={handleSend}
