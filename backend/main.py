@@ -4,7 +4,7 @@ import asyncio
 import logging
 import functools
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Thread
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import config
 from chatbot import chat
 from crawler import run_crawl
-from embedder import embed_articles, get_stats
+from faiss_embedder import embed_articles, get_stats
 from models import ChatRequest, ChatResponse, StatsResponse
 from stt_engine import transcribe_audio
 
@@ -33,7 +33,7 @@ def _crawl_and_embed() -> None:
         if articles:
             embed_articles(articles)
             _total_articles += len(articles)
-        _last_crawled_at = datetime.utcnow().isoformat()
+        _last_crawled_at = datetime.now(timezone.utc).isoformat()
         logger.info(
             "Crawl+embed cycle complete – %d new articles, %d total",
             len(articles),

@@ -4,9 +4,6 @@ import logging
 import re
 from typing import Optional
 
-from openai import OpenAI
-import anthropic
-
 import config
 from models import ChatRequest, ChatResponse, SourceInfo
 from retriever import retrieve
@@ -44,7 +41,8 @@ def _detect_intent(question: str) -> str:
     return "simple"
 
 
-_SIMPLE_PROMPT = """Bạn là trợ lý đọc báo thông minh. Dựa trên các đoạn tin tức sau đây từ báo Việt Nam, hãy trả lời câu hỏi của người dùng bằng tiếng Việt một cách chính xác và súc tích.
+_SIMPLE_PROMPT = """\
+Bạn là trợ lý đọc báo thông minh. Dựa trên các đoạn tin tức sau đây từ báo Việt Nam, hãy trả lời câu hỏi của người dùng bằng tiếng Việt một cách chính xác và súc tích.
 
 Context:
 {chunks}
@@ -54,9 +52,11 @@ Câu hỏi: {question}
 Yêu cầu:
 - Trả lời dựa trên context được cung cấp
 - Nếu không có đủ thông tin, nói rõ "Tôi không tìm thấy thông tin về vấn đề này trong dữ liệu hiện tại"
-- Cuối câu trả lời liệt kê nguồn tham khảo kèm link"""
+- Cuối câu trả lời liệt kê nguồn tham khảo kèm link\
+"""
 
-_MULTI_SOURCE_PROMPT = """Bạn là trợ lý đọc báo thông minh chuyên tổng hợp tin tức. Dựa trên các đoạn tin tức sau đây từ nhiều báo Việt Nam, hãy tổng hợp và trả lời câu hỏi của người dùng.
+_MULTI_SOURCE_PROMPT = """\
+Bạn là trợ lý đọc báo thông minh chuyên tổng hợp tin tức. Dựa trên các đoạn tin tức sau đây từ nhiều báo Việt Nam, hãy tổng hợp và trả lời câu hỏi của người dùng.
 
 Context (nhóm theo nguồn):
 {chunks}
@@ -68,19 +68,18 @@ Yêu cầu:
 - Trình bày theo cấu trúc: Tổng quan -> Chi tiết theo từng góc độ/nguồn -> Kết luận
 - Ghi rõ "Theo VnExpress...", "Theo Tuổi Trẻ...", "Theo Thanh Niên..." khi trích dẫn
 - Nếu thông tin mâu thuẫn giữa các nguồn, ghi nhận cả hai góc nhìn
-- Cuối câu trả lời liệt kê tất cả nguồn tham khảo kèm link"""
+- Cuối câu trả lời liệt kê tất cả nguồn tham khảo kèm link\
+"""
 
 
 def _build_context(chunks: list[dict], intent: str) -> str:
     if intent == "multi_source":
-        # group chunks by source
         grouped: dict[str, list[str]] = {}
         for chunk in chunks:
             src = chunk["metadata"].get("source", "Unknown")
             title = chunk["metadata"].get("title", "")
             text = f"[{title}] {chunk['document']}"
             grouped.setdefault(src, []).append(text)
-
         parts = []
         for source, texts in grouped.items():
             parts.append(f"\n--- {source} ---")
@@ -101,14 +100,15 @@ def _call_openai(prompt: str) -> Optional[str]:
     if not config.OPENAI_API_KEY:
         logger.warning("OPENAI_API_KEY not set – skipping OpenAI call")
         return None
-
     try:
+        from openai import OpenAI  # lazy import
         client = OpenAI(api_key=config.OPENAI_API_KEY)
         response = client.chat.completions.create(
             model=config.LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=config.LLM_MAX_TOKENS,
             temperature=config.LLM_TEMPERATURE,
+            timeout=30,
         )
         return response.choices[0].message.content
     except Exception as exc:
@@ -124,13 +124,14 @@ def _call_anthropic(prompt: str) -> Optional[str]:
     if not config.ANTHROPIC_API_KEY:
         logger.warning("ANTHROPIC_API_KEY not set – skipping fallback")
         return None
-
     try:
+        import anthropic  # lazy import
         client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
         response = client.messages.create(
             model=config.LLM_FALLBACK_MODEL,
             max_tokens=config.LLM_MAX_TOKENS,
             messages=[{"role": "user", "content": prompt}],
+            timeout=30,
         )
         return response.content[0].text
     except Exception as exc:
@@ -142,12 +143,10 @@ def _call_llm(prompt: str) -> str:
     answer = _call_openai(prompt)
     if answer:
         return answer
-
     logger.info("Primary LLM failed – trying Anthropic fallback...")
     answer = _call_anthropic(prompt)
     if answer:
         return answer
-
     return (
         "Xin lỗi, hiện tại tôi không thể xử lý yêu cầu của bạn. "
         "Vui lòng thử lại sau hoặc kiểm tra cấu hình API key."
@@ -157,11 +156,11 @@ def _call_llm(prompt: str) -> str:
 def chat(request: ChatRequest) -> ChatResponse:
     """
     Full RAG pipeline:
-      1. Detect intent
-      2. Retrieve relevant chunks
-      3. Build prompt
-      4. Call LLM
-      5. Return structured response
+    1. Detect intent
+    2. Retrieve relevant chunks
+    3. Build prompt
+    4. Call LLM
+    5. Return structured response
     """
     question = request.question.strip()
     intent = _detect_intent(question)
@@ -169,10 +168,10 @@ def chat(request: ChatRequest) -> ChatResponse:
     # decide retrieval parameters
     if intent == "multi_source":
         top_k = config.MULTI_TOP_K
-        threshold = 0.20   # broader coverage for synthesis
+        threshold = 0.20  # broader coverage for synthesis
     else:
         top_k = config.SIMPLE_TOP_K
-        threshold = 0.25   # was 0.35, logs show scores ~0.47 which is normal
+        threshold = 0.25  # was 0.35, logs show scores ~0.47 which is normal
 
     # apply user filters
     sources = request.filters.sources or None
@@ -180,10 +179,7 @@ def chat(request: ChatRequest) -> ChatResponse:
 
     logger.info(
         "Chat | intent=%s | top_k=%d | threshold=%.2f | q=%.80s",
-        intent,
-        top_k,
-        threshold,
-        question,
+        intent, top_k, threshold, question,
     )
 
     # retrieve

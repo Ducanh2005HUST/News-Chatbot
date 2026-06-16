@@ -5,6 +5,7 @@ import logging
 import os
 import pickle
 import time
+from datetime import datetime, timezone, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -353,9 +354,9 @@ def get_all_articles() -> list[Article]:
             try:
                 crawled_at = datetime.fromisoformat(data["crawled_at"])
             except Exception:
-                crawled_at = datetime.utcnow()
+                crawled_at = datetime.now(timezone.utc)
         else:
-            crawled_at = datetime.utcnow()
+            crawled_at = datetime.now(timezone.utc)
 
         article = Article(
             title=data["title"],
