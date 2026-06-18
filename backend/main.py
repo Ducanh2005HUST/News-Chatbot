@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import asyncio
 import logging
 import functools
@@ -7,8 +8,12 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from threading import Thread
 
+# Fix OMP error on Windows - prevent duplicate OpenMP runtime
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
@@ -88,14 +93,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest):
+@app.post("/chat")
+async def chat_endpoint(
+    request: ChatRequest,
+    stream: bool = Query(False, description="Stream response token by token")
+):
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
     try:
-        response = chat(request)
-        return response
+        if stream:
+            from chatbot import chat_stream
+            return StreamingResponse(
+                chat_stream(request),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",  # Disable nginx buffering
+                    "Connection": "keep-alive",
+                },
+            )
+        else:
+            response = chat(request)
+            return response
     except Exception as exc:
         logger.error("Chat endpoint error: %s", exc)
         raise HTTPException(

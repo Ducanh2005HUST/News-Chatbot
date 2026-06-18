@@ -32,7 +32,15 @@ CHUNK_OVERLAP = 50       # overlap tokens between chunks
 
 SIMPLE_TOP_K = 8
 MULTI_TOP_K = 20
-SIMILARITY_THRESHOLD = 0.25
+SIMILARITY_THRESHOLD = 0.15  # Lowered from 0.25 to capture more relevant chunks
+
+# Reranker settings
+RERANKER_ENABLED = os.getenv("RERANKER_ENABLED", "true").lower() == "true"
+SIMPLE_RETRIEVAL_TOP_K = 30   # Retrieve more chunks before reranking
+MULTI_RETRIEVAL_TOP_K = 50
+SIMPLE_FINAL_TOP_K = 8
+MULTI_FINAL_TOP_K = 20
+RERANKER_THRESHOLD = float(os.getenv("RERANKER_THRESHOLD", "0.1"))
 
 RSS_FEEDS = [
     # VnExpress

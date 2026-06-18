@@ -13,6 +13,7 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [useStreaming, setUseStreaming] = useState(true); // Enable streaming by default
     // --- STT states ---
     const [isRecording, setIsRecording] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
@@ -67,24 +68,83 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
         setIsLoading(true);
 
         try {
-            const data = await sendChatMessage(question, {
-                sources: filters.sources,
-                categories: filters.categories,
-            });
-            const botMsg = {
-                id: `bot-${Date.now()}`,
-                role: 'bot',
-                text: data.answer,
-                sources: data.sources || [],
-                intent: data.intent || 'simple',
-                timestamp: _now(),
-            };
-            const nextAfterBot = [...messagesRef.current, botMsg];
-            messagesRef.current = nextAfterBot;
-            onMessagesChange && onMessagesChange(nextAfterBot);
+            if (useStreaming) {
+                // Streaming mode
+                const botMsgId = `bot-${Date.now()}`;
+                const botMsg = {
+                    id: botMsgId,
+                    role: 'bot',
+                    text: '',
+                    sources: [],
+                    intent: 'simple', // will be updated in onDone
+                    timestamp: _now(),
+                    isStreaming: true,
+                };
+                const nextWithBot = [...messagesRef.current, botMsg];
+                messagesRef.current = nextWithBot;
+                onMessagesChange && onMessagesChange(nextWithBot);
+
+                await sendChatMessage(
+                    question,
+                    {
+                        sources: filters.sources,
+                        categories: filters.categories,
+                    },
+                    true, // stream = true
+                    (token) => {
+                        // onToken: append token to bot message
+                        const msgs = messagesRef.current;
+                        const idx = msgs.findIndex(m => m.id === botMsgId);
+                        if (idx !== -1) {
+                            msgs[idx].text += token;
+                            onMessagesChange && onMessagesChange([...msgs]);
+                            // Auto-scroll
+                            setTimeout(() => {
+                                if (messagesEndRef.current) {
+                                    messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                                }
+                            }, 0);
+                        }
+                    },
+                    (done) => {
+                        // onDone: finalize bot message
+                        const msgs = messagesRef.current;
+                        const idx = msgs.findIndex(m => m.id === botMsgId);
+                        if (idx !== -1) {
+                            msgs[idx] = {
+                                ...msgs[idx],
+                                ...done,
+                                isStreaming: false,
+                            };
+                            onMessagesChange && onMessagesChange([...msgs]);
+                        }
+                        setIsLoading(false);
+                        setTimeout(() => inputRef.current?.focus(), 50);
+                    }
+                );
+            } else {
+                // Non-streaming mode
+                const data = await sendChatMessage(question, {
+                    sources: filters.sources,
+                    categories: filters.categories,
+                });
+                const botMsg = {
+                    id: `bot-${Date.now()}`,
+                    role: 'bot',
+                    text: data.answer,
+                    sources: data.sources || [],
+                    intent: data.intent || 'simple',
+                    timestamp: _now(),
+                    isStreaming: false,
+                };
+                const nextAfterBot = [...messagesRef.current, botMsg];
+                messagesRef.current = nextAfterBot;
+                onMessagesChange && onMessagesChange(nextAfterBot);
+                setIsLoading(false);
+                setTimeout(() => inputRef.current?.focus(), 50);
+            }
         } catch (err) {
             setError(_formatError(err));
-        } finally {
             setIsLoading(false);
             setTimeout(() => inputRef.current?.focus(), 50);
         }
@@ -293,6 +353,18 @@ export default function ChatWindow({ chatId, filters, messages, onMessagesChange
                             e.target.style.height = Math.min(e.target.scrollHeight, 128) + 'px';
                         }}
                     />
+                    {/* Streaming toggle */}
+                    <div className="flex flex-col gap-1 pb-3">
+                        <label className="flex items-center gap-2 cursor-pointer" title="Bật/tắt streaming (tự động hiển thị từng chữ)">
+                            <input
+                                type="checkbox"
+                                checked={useStreaming}
+                                onChange={(e) => setUseStreaming(e.target.checked)}
+                                className="rounded border-gray-300 dark:border-gray-600 accent-[var(--accent)]"
+                            />
+                            <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap">Streaming</span>
+                        </label>
+                    </div>
 
                     {/* ── Nút Microphone ── */}
                     <button

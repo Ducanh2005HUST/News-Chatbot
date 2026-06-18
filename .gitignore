@@ -60,6 +60,7 @@ npm-debug.log
 yarn-error.log
 yarn.log
 pnpm-debug.log*
+*.log
 
 frontend/dist/
 frontend/build/

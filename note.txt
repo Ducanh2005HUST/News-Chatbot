@@ -1,0 +1,111 @@
+Top 10 sự kiện đáng chú ý tuần này
+01:29
+
+Trợ lý AI
+
+Tôi không tìm thấy thông tin về vấn đề này trong dữ liệu hiện tại.
+
+Nguồn tham khảo:
+
+Tuổi Trẻ: [UFC Freedom 250 - sự kiện MMA chưa từng có](https://tuoitre.vn)
+VnExpress: [iPhone 17 Pro Max bán chạy nhất cuối năm 2025](https://vnexpress.net)
+Tuổi Trẻ: [Lịch trực tiếp vòng 14 Giải hạng nhất: Đồng Tháp đấu Trường Tươi Đồng Nai](https://tuoitre.vn)
+Tuổi Trẻ: [Tin tức sáng 13-6: Đề xuất phạt tới 1 triệu đồng khi xả rác hoặc đổ nước thải không đúng quy định](https://tuoitre.vn)
+Tuổi Trẻ: [Cổ phiếu 'vua' đồng loạt khởi sắc sau tin các ngân hàng hạ lãi suất](https://tuoitre.vn)
+VnExpress: [Chứng khoán mất điểm vào cuối phiên](https://vnexpress.net)
+
+2026-06-16 01:29:14 | chatbot            | INFO    | Chat | intent=simple | top_k=8 | threshold=0.25 | q=Top 10 sự kiện đáng chú ý tuần này
+2026-06-16 01:29:14 | retriever          | INFO    | Retriever called: _index=True, _documents count=6995
+2026-06-16 01:29:14 | retriever          | INFO    | FAISS index has 6995 documents, querying top 8 ...
+2026-06-16 01:29:15 | httpx              | INFO    | HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-06-16 01:29:15 | retriever          | INFO    | Raw distances (top 8): [0.403, 0.3885, 0.3802, 0.3794, 0.3774]
+2026-06-16 01:29:15 | retriever          | INFO    | Retrieved 8 chunks (of 8) above threshold 0.25 for query: Top 10 sự kiện đáng chú ý tuần này...
+2026-06-16 01:29:20 | httpx              | INFO    | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+
+--------------------------------------------------------------------
+
+top 10 su kien dang chu y tuan vua qua
+01:31
+
+Trợ lý AI
+
+Dựa trên các đoạn tin tức đã cung cấp, dưới đây là những sự kiện đáng chú ý trong tuần qua:
+
+Lại Lý Huynh nhận Huân chương Lao động hạng nhất: Kỳ thủ Lại Lý Huynh được trao tặng Huân chương Lao động hạng nhất nhờ những thành tích xuất sắc trong cờ tướng, đặc biệt là chức vô địch thế giới năm 2025. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Hà Văn Tiến trở thành tân vương cờ tướng Việt Nam: Hà Văn Tiến đã giành chức vô địch cờ tướng quốc gia 2026 sau khi đánh bại Nguyễn Thành Bảo trong trận chung kết. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Lê Quang Liêm dừng bước ở bán kết: Kỳ thủ Lê Quang Liêm không thể vào chung kết giải đấu khi thua Magnus Carlsen, nhưng vẫn để lại ấn tượng mạnh mẽ. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Caruana không thể tranh ngôi Vua cờ: Kỳ thủ Caruana đã không thể giành quyền tranh ngôi Vua cờ tại giải Candidates 2026. [Nguồn: VnExpress](https://vnexpress.net)
+Xuất hiện đại kiện tướng trẻ: Kỳ thủ 20 tuổi Sindarov được xem là ứng cử viên sáng giá tại giải Candidates 2026. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Đàm Thị Thùy Dung bảo vệ thành công ngôi hậu: Kỳ thủ Đàm Thị Thùy Dung đã giành chức vô địch cờ tiêu chuẩn nữ quốc gia lần thứ ba. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Lại Lý Huynh chứng tỏ đẳng cấp ở nội dung cờ nhanh: Sau khi bị loại ở giải quốc gia, Lại Lý Huynh đã giành chức vô địch cờ nhanh quốc gia lần thứ 7. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Kỳ thủ trẻ Trung Quốc gây chấn động: Kỳ thủ 13 tuổi Trần Thiệu Bác đã đánh bại nhiều cao thủ cờ tướng hàng đầu. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Giải cờ vua Candidates 2026 đang diễn ra: Giải đấu này quy tụ nhiều kỳ thủ hàng đầu thế giới, trong đó có Gukesh Dommaraju và Ju Wenjun. [Nguồn: VnExpress](https://vnexpress.net)
+Lại Lý Huynh tiếp tục thành công trên đấu trường quốc tế: Sau chức vô địch thế giới, Lại Lý Huynh đã vào đến chung kết giải Ngũ Dương Bôi. [Nguồn: Tuổi Trẻ](https://tuoitre.vn)
+Nếu bạn cần thêm thông tin chi tiết về bất kỳ sự kiện nào, hãy cho tôi biết!
+
+6 nguồn tham khảo
+01:31
+
+Bạn
+
+top 10 su kien cong nghe dang chu y tuan vua qua
+01:32
+
+Trợ lý AI
+
+Tôi không tìm thấy thông tin về vấn đề này trong dữ liệu hiện tại.
+
+Nguồn tham khảo:
+
+VnExpress
+Thanh Niên
+Tuổi Trẻ
+
+----------------------------------------------------------------------------------
+
+tin AI moi nhat hom nay
+01:33
+
+Trợ lý AI
+
+Tôi không tìm thấy thông tin về vấn đề này trong dữ liệu hiện tại.
+
+Nguồn tham khảo: VnExpress, Tuổi Trẻ.
+
+6 nguồn tham khảo
+01:33
+
+Bạn
+
+tin tức về AI mới nhất hôm nay
+01:33
+
+Trợ lý AI
+
+Tin tức mới nhất về AI hôm nay đề cập đến việc AI đang ngày càng phổ biến và ảnh hưởng mạnh mẽ đến cách con người tìm kiếm thông tin, cũng như cách thức làm việc trong các công ty công nghệ. Một khảo sát cho thấy người dùng ngày càng khắt khe hơn về bảo mật và quyền riêng tư khi sử dụng AI. Ngoài ra, AI cũng đang được tin tặc lợi dụng để phát triển mã độc và thực hiện các cuộc tấn công mạng. Cuối cùng, việc sử dụng AI trong tuyển dụng đang trở thành tiêu chí quan trọng đối với các công ty công nghệ tại Việt Nam.
+
+Nguồn tham khảo:
+
+Tuổi Trẻ: [Trải nghiệm trực quan, đáng tin cậy trên AI Phone đích thực](https://tuoitre.vn)
+Tuổi Trẻ: [ChatGPT, Gemini trở thành nguồn traffic mới trên Google Analytics](https://tuoitre.vn)
+Tuổi Trẻ: [Microsoft: Tin tặc dùng AI viết email lừa đảo, phát triển mã độc, tăng tốc tấn công mạng toàn cầu](https://tuoitre.vn)
+VnExpress: [Biết dùng AI - tiêu chí tuyển dụng mới của công ty công nghệ Việt](https://vnexpress.net)INFO:     127.0.0.1:52463 - "GET /stats HTTP/1.1" 200 OK
+2026-06-16 01:33:40 | chatbot            | INFO    | Chat | intent=simple | top_k=8 | threshold=0.25 | q=tin AI moi nhat hom nay
+2026-06-16 01:33:40 | retriever          | INFO    | Retriever called: _index=True, _documents count=6995
+2026-06-16 01:33:40 | retriever          | INFO    | FAISS index has 6995 documents, querying top 8 ...
+2026-06-16 01:33:40 | retriever          | INFO    | After filtering: 1847 documents match
+2026-06-16 01:33:41 | httpx              | INFO    | HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-06-16 01:33:41 | retriever          | INFO    | Raw distances (top 8): [0.5226, 0.5217, 0.5212, 0.5182, 0.5178]
+2026-06-16 01:33:41 | retriever          | INFO    | Retrieved 8 chunks (of 8) above threshold 0.25 for query: tin AI moi nhat hom nay...
+2026-06-16 01:33:43 | httpx              | INFO    | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:50158 - "POST /chat HTTP/1.1" 200 OK
+2026-06-16 01:33:54 | chatbot            | INFO    | Chat | intent=simple | top_k=8 | threshold=0.25 | q=tin tức về AI mới nhất hôm nay
+2026-06-16 01:33:54 | retriever          | INFO    | Retriever called: _index=True, _documents count=6995
+2026-06-16 01:33:54 | retriever          | INFO    | FAISS index has 6995 documents, querying top 8 ...
+2026-06-16 01:33:54 | retriever          | INFO    | After filtering: 1847 documents match
+2026-06-16 01:33:54 | httpx              | INFO    | HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-06-16 01:33:54 | retriever          | INFO    | Raw distances (top 8): [0.5684, 0.558, 0.558, 0.5553, 0.5552]
+2026-06-16 01:33:54 | retriever          | INFO    | Retrieved 8 chunks (of 8) above threshold 0.25 for query: tin tức về AI mới nhất hôm nay...
+2026-06-16 01:33:59 | httpx              | INFO    | HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+-------------------------------------------------------------
+

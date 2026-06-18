@@ -175,6 +175,18 @@ def embed_articles(articles: list[Article]) -> int:
     # Initialize index if needed
     init_index()
 
+    # Deduplication: skip articles that already exist in the index
+    existing_urls = {meta.get("url") for meta in _metadatas if meta.get("url")}
+    new_articles = [a for a in articles if a.url not in existing_urls]
+
+    skipped = len(articles) - len(new_articles)
+    if skipped > 0:
+        logger.info("Skipped %d articles that already exist in FAISS index", skipped)
+
+    if not new_articles:
+        logger.info("No new articles to embed")
+        return 0
+
     start = __import__("time").time()
     total_chunks = 0
 
