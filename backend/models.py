@@ -21,6 +21,7 @@ class ChatFilters(BaseModel):
 class ChatRequest(BaseModel):
     question: str
     filters: ChatFilters = Field(default_factory=ChatFilters)
+    session_id: Optional[str] = None  # Milestone 4: conversation history
 
 class SourceInfo(BaseModel):
     title: str
@@ -34,6 +35,7 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[SourceInfo] = Field(default_factory=list)
     intent: str = "simple"          # "simple" | "multi_source"
+    session_id: Optional[str] = None  # Milestone 4: session identifier
 
 class StatsResponse(BaseModel):
     total_articles: int = 0

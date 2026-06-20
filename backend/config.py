@@ -26,6 +26,10 @@ LLM_FALLBACK_MODEL = "claude-3-5-haiku-20241022"
 LLM_MAX_TOKENS = 2048
 LLM_TEMPERATURE = 0.3
 
+# Query preprocessing & hallucination guard
+GUARD_ENABLED = os.getenv("GUARD_ENABLED", "true").lower() == "true"
+GUARD_MIN_SIMILARITY = float(os.getenv("GUARD_MIN_SIMILARITY", "0.35"))
+QUERY_NORMALIZE_DIACRITICS = os.getenv("QUERY_NORMALIZE_DIACRITICS", "false").lower() == "true"
 
 CHUNK_SIZE = 300         # approximate tokens per chunk
 CHUNK_OVERLAP = 50       # overlap tokens between chunks
