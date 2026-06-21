@@ -8,41 +8,78 @@ export default {
     theme: {
         extend: {
             colors: {
+                // Cool Professional Newspaper Palette
                 primary: {
-                    50: '#eef5ff',
-                    100: '#d9e8ff',
-                    200: '#bcd7ff',
-                    300: '#8ebfff',
-                    400: '#599cff',
-                    500: '#3378ff',
-                    600: '#1b57f5',
-                    700: '#1443e1',
-                    800: '#1736b6',
-                    900: '#19328f',
-                    950: '#142057',
+                    50: '#e8f1f8',
+                    100: '#d1e3f0',
+                    200: '#a8c8e3',
+                    300: '#7aadd6',
+                    400: '#4d91c9',
+                    500: '#2e76b3',
+                    600: '#1e5a92',
+                    700: '#164876',
+                    800: '#123b60',
+                    900: '#0f2f4c',
+                    950: '#0a1628', // Deep navy
+                },
+                accent: {
+                    50: '#e6f6ff',
+                    100: '#ccebff',
+                    200: '#99d6ff',
+                    300: '#66c2ff',
+                    400: '#33adff',
+                    500: '#00a8e8', // Arctic blue - primary accent
+                    600: '#008dc4',
+                    700: '#0072a0',
+                    800: '#00587d',
+                    900: '#003f5a',
                 },
                 surface: {
-                    50: '#f8f9fc',
-                    100: '#f0f2f7',
-                    200: '#e4e7ef',
-                    300: '#ced4e2',
-                    400: '#b3bbd0',
-                    500: '#9ba4bc',
-                    600: '#8089a5',
-                    700: '#6b7390',
-                    800: '#596076',
-                    900: '#4b5162',
-                    950: '#2c303a',
-                },
-                dark: {
-                    700: '#1e2130',
-                    800: '#171a27',
-                    900: '#10121c',
-                    950: '#0a0c14',
+                    50: '#f8fafc', // Paper white
+                    100: '#f1f5f9',
+                    200: '#e2e8f0',
+                    300: '#cbd5e1',
+                    400: '#94a3b8',
+                    500: '#64748b',
+                    600: '#475569',
+                    700: '#334155',
+                    800: '#1e293b',
+                    900: '#0f172a', // Rich navy
+                    950: '#020617',
                 },
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                // Display font for headlines and hero sections
+                display: ['"Playfair Display"', 'Georgia', 'serif'],
+                // Body font for readability
+                body: ['"Inter"', '"Be Vietnam Pro"', 'system-ui', '-apple-system', 'sans-serif'],
+                // Monospace for code and data
+                mono: ['"JetBrains Mono"', '"Fira Code"', 'Consolas', 'monospace'],
+            },
+            borderRadius: {
+                'xs': '2px',
+                'sm': '4px',
+                'md': '8px',
+                'lg': '12px',
+                'xl': '16px',
+                '2xl': '24px',
+            },
+            boxShadow: {
+                'subtle': '0 1px 3px rgba(10, 22, 40, 0.08)',
+                'sm': '0 2px 6px rgba(10, 22, 40, 0.10)',
+                'md': '0 4px 12px rgba(10, 22, 40, 0.12)',
+                'lg': '0 8px 24px rgba(10, 22, 40, 0.15)',
+                'accent': '0 4px 16px rgba(0, 168, 232, 0.25)',
+            },
+            spacing: {
+                '18': '4.5rem',
+                '22': '5.5rem',
+            },
+            fontSize: {
+                'caption': ['0.75rem', { lineHeight: '1.5' }],
+                'display-sm': ['2rem', { lineHeight: '1.3', fontFamily: 'display' }],
+                'display-md': ['2.5rem', { lineHeight: '1.2', fontFamily: 'display' }],
+                'display-lg': ['3rem', { lineHeight: '1.2', fontFamily: 'display' }],
             },
         },
     },
