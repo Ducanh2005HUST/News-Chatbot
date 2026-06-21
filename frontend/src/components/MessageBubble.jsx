@@ -1,9 +1,5 @@
 import SourceCard from './SourceCard';
 
-/**
- * MessageBubble – renders a single chat message (user or bot).
- * Bot messages get source cards appended below.
- */
 export default function MessageBubble({ message }) {
     const isUser = message.role === 'user';
     const lines = message.text.split('\n');
@@ -13,22 +9,15 @@ export default function MessageBubble({ message }) {
             className={`animate-fadeInUp flex ${isUser ? 'justify-end' : 'justify-start'}`}
             id={`message-${message.id}`}
         >
-            <div className={`max-w-[85%] md:max-w-[75%] ${isUser ? '' : 'w-full md:w-[75%]'}`}>
+            <div className={`${isUser ? 'max-w-[70%]' : 'max-w-[85%]'}`}>
                 {/* Bubble */}
                 <div
-                    className={`
-            rounded-2xl px-4 py-3 leading-relaxed text-sm
-            transition-theme
-            ${isUser
-                            ? 'bg-[var(--accent)] text-white rounded-br-md shadow-[var(--shadow-md)]'
-                            : 'bg-[var(--bg-elevated)] backdrop-blur-md text-[var(--text-primary)] rounded-bl-md border border-[var(--border-color)] shadow-[var(--shadow-sm)]'
-                        }
-          `}
+                    className={`rounded-lg px-4 py-3 leading-relaxed text-sm transition-theme shadow-sm ${
+                        isUser
+                            ? 'bg-[var(--accent)] text-white rounded-tl-lg rounded-br-lg py-3 px-4 shadow-md'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border-l-2 border-[var(--accent)] py-4 px-4'
+                    }`}
                 >
-                    {!isUser && (
-                        <span className="inline-block align-middle w-1 h-4 rounded-full bg-[var(--accent)]/60 mr-2" aria-hidden="true" />
-                    )}
-                    {/* Render answer text – preserve newlines */}
                     {lines.map((line, i) => (
                         <span key={i}>
                             {isUser ? line : <LinkifiedText text={line} />}
@@ -39,9 +28,9 @@ export default function MessageBubble({ message }) {
 
                 {/* Intent badge for multi-source */}
                 {!isUser && message.intent === 'multi_source' && (
-                    <div className="mt-1.5 ml-1">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/15 font-semibold">
-                            Tong hop nhieu nguon
+                    <div className="mt-1.5 ml-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/15 font-semibold uppercase tracking-wide">
+                            Tổng hợp nhiều nguồn
                         </span>
                     </div>
                 )}
@@ -49,7 +38,7 @@ export default function MessageBubble({ message }) {
                 {/* Source cards */}
                 {!isUser && message.sources && message.sources.length > 0 && (
                     <div className="mt-3 space-y-2">
-                        <p className="text-xs font-semibold text-[var(--text-muted)] ml-1 tracking-wide uppercase">
+                        <p className="text-[10px] font-semibold text-[var(--text-muted)] ml-1 tracking-wide uppercase">
                             Nguồn tham khảo
                         </p>
                         <div className="grid grid-cols-1 gap-2">
@@ -70,7 +59,6 @@ export default function MessageBubble({ message }) {
 }
 
 function LinkifiedText({ text }) {
-    // Minimal linkify for http(s) URLs in LLM answers.
     const parts = text.split(/(\s+)/);
     return parts.map((part, idx) => {
         if (/^https?:\/\/\S+$/i.test(part)) {

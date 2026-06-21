@@ -14,10 +14,10 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - CHROMA_PATH=/app/chroma_data
+      - FAISS_PATH=/app/faiss_data
     volumes:
-      # Lưu ChromaDB data persistent (không mất khi restart container)
-      - chroma_data:/app/chroma_data
+      # Lưu FAISS index và metadata persistent
+      - faiss_data:/app/faiss_data
       # Lưu HuggingFace model cache (nếu dùng local model sau này)
       - huggingface_cache:/root/.cache/huggingface
     networks:
@@ -45,5 +45,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  chroma_data:
+  faiss_data:
   huggingface_cache:

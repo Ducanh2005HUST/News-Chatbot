@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
+import EditorialBadge from './components/EditorialBadge';
 import {
     initStore,
     listChats,
@@ -13,10 +14,8 @@ import {
     exportChat,
     loadIndexOrNull,
 } from './store/chatStore';
+import { fetchStats } from './api/chatApi';
 
-/**
- * App – root layout with dark/light toggle, sidebar, and chat window.
- */
 export default function App() {
     const [dark, setDark] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -29,6 +28,9 @@ export default function App() {
 
     const [filters, setFilters] = useState({ sources: [], categories: [] });
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [stats, setStats] = useState(null);
 
     const [chatIndex, setChatIndex] = useState(() => {
         if (typeof window === 'undefined') return null;
@@ -36,11 +38,35 @@ export default function App() {
     });
     const [activeMessages, setActiveMessages] = useState(() => WELCOME_MESSAGES);
 
+    // Detect mobile screen size
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     // Apply dark class to <html>
     useEffect(() => {
         document.documentElement.classList.toggle('dark', dark);
         localStorage.setItem('theme', dark ? 'dark' : 'light');
     }, [dark]);
+
+    // Fetch stats every 60 seconds
+    useEffect(() => {
+        let timer;
+        async function load() {
+            try {
+                const data = await fetchStats();
+                setStats(data);
+            } catch (e) {
+                console.error('Failed to fetch stats:', e);
+            }
+        }
+        load();
+        timer = setInterval(load, 60000);
+        return () => clearInterval(timer);
+    }, []);
 
     // Initialize chat store once (and migrate legacy single-chat if present).
     useEffect(() => {
@@ -60,11 +86,20 @@ export default function App() {
     const chats = chatIndex ? listChats(chatIndex) : [];
     const activeChatId = chatIndex?.activeId ?? null;
 
+    function handleSidebarToggle() {
+        if (isMobile) {
+            setMobileOpen(prev => !prev);
+        } else {
+            setSidebarCollapsed(prev => !prev);
+        }
+    }
+
     function handleNewChat() {
         if (!chatIndex) return;
         const nextIndex = createChat(chatIndex, { welcomeMessages: WELCOME_MESSAGES });
         setChatIndex(nextIndex);
         setActiveMessages(WELCOME_MESSAGES);
+        if (isMobile) setMobileOpen(false);
     }
 
     function handleSelectChat(id) {
@@ -73,6 +108,7 @@ export default function App() {
         setChatIndex(nextIndex);
         const msgs = loadChatMessages(id, { welcomeMessages: WELCOME_MESSAGES });
         setActiveMessages(msgs);
+        if (isMobile) setMobileOpen(false);
     }
 
     function handleRenameChat(id, title) {
@@ -122,22 +158,42 @@ export default function App() {
         >
             <BackgroundDecor />
 
-            {/* ── Sidebar ───────────────────────────────────────── */}
-            <Sidebar
-                filters={filters}
-                onFiltersChange={setFilters}
-                collapsed={sidebarCollapsed}
-                onToggle={() => setSidebarCollapsed((p) => !p)}
-                chats={chats}
-                activeChatId={activeChatId}
-                onNewChat={handleNewChat}
-                onSelectChat={handleSelectChat}
-                onRenameChat={handleRenameChat}
-                onDeleteChat={handleDeleteChat}
-                onExportChat={handleExportChat}
-            />
+            {/* Mobile backdrop */}
+            {isMobile && mobileOpen && (
+                <div
+                    className="fixed inset-0 bg-black/20 z-40"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
 
-            {/* ── Main area ─────────────────────────────────────── */}
+            {/* Sidebar wrapper */}
+            <div
+                className={`
+                    ${isMobile
+                        ? `fixed inset-y-0 left-0 z-50 transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-250`
+                        : 'flex-shrink-0'
+                    }
+                    ${!isMobile && (sidebarCollapsed ? 'w-[80px]' : 'w-80')}
+                    flex flex-col h-full overflow-hidden
+                `}
+                style={isMobile ? { width: '320px' } : {}}
+            >
+                <Sidebar
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    collapsed={!isMobile && sidebarCollapsed}
+                    onToggle={handleSidebarToggle}
+                    chats={chats}
+                    activeChatId={activeChatId}
+                    onNewChat={handleNewChat}
+                    onSelectChat={handleSelectChat}
+                    onRenameChat={handleRenameChat}
+                    onDeleteChat={handleDeleteChat}
+                    onExportChat={handleExportChat}
+                />
+            </div>
+
+            {/* Main area */}
             <main className="flex-1 flex flex-col min-w-0">
                 {/* Top bar */}
                 <header
@@ -148,11 +204,11 @@ export default function App() {
                         {/* Sidebar toggle */}
                         <button
                             id="sidebar-toggle-btn"
-                            onClick={() => setSidebarCollapsed((p) => !p)}
-                            className="p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] transition-colors focus:ring-2 focus:ring-[var(--ring)]"
+                            onClick={handleSidebarToggle}
+                            className="p-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] transition-colors focus:ring-2 focus:ring-[var(--ring)] min-w-[44px] min-h-[44px]"
                             aria-label="Toggle sidebar"
                         >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="3" y1="6" x2="21" y2="6" />
                                 <line x1="3" y1="12" x2="21" y2="12" />
                                 <line x1="3" y1="18" x2="21" y2="18" />
@@ -177,36 +233,40 @@ export default function App() {
                             </div>
                         </div>
 
-                        <FilterPills filters={filters} onClear={() => setFilters({ sources: [], categories: [] })} />
+                        <FilterPill
+                            filters={filters}
+                            onClear={() => setFilters({ sources: [], categories: [] })}
+                        />
                     </div>
 
-                    {/* Dark mode toggle */}
-                    <button
-                        id="theme-toggle-btn"
-                        onClick={() => setDark((d) => !d)}
-                        className="p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] transition-colors focus:ring-2 focus:ring-[var(--ring)]"
-                        aria-label="Toggle theme"
-                    >
-                        {dark ? (
-                            /* Sun icon */
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="5" />
-                                <line x1="12" y1="1" x2="12" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="23" />
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                <line x1="1" y1="12" x2="3" y2="12" />
-                                <line x1="21" y1="12" x2="23" y2="12" />
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                            </svg>
-                        ) : (
-                            /* Moon icon */
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                            </svg>
-                        )}
-                    </button>
+                    {/* Right side: badge + theme toggle */}
+                    <div className="flex items-center gap-2">
+                        <EditorialBadge count={stats?.total_articles ?? 0} />
+                        <button
+                            id="theme-toggle-btn"
+                            onClick={() => setDark((d) => !d)}
+                            className="p-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] transition-colors focus:ring-2 focus:ring-[var(--ring)] min-w-[44px] min-h-[44px]"
+                            aria-label="Toggle theme"
+                        >
+                            {dark ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="5" />
+                                    <line x1="12" y1="1" x2="12" y2="3" />
+                                    <line x1="12" y1="21" x2="12" y2="23" />
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                    <line x1="1" y1="12" x2="3" y2="12" />
+                                    <line x1="21" y1="12" x2="23" y2="12" />
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                                </svg>
+                            ) : (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
                 </header>
 
                 {/* Chat content */}
@@ -223,7 +283,7 @@ export default function App() {
     );
 }
 
-function FilterPills({ filters, onClear }) {
+function FilterPill({ filters, onClear }) {
     const sources = filters.sources ?? [];
     const categories = filters.categories ?? [];
     const isAll = sources.length === 0 && categories.length === 0;
@@ -232,25 +292,21 @@ function FilterPills({ filters, onClear }) {
         <div className="hidden md:flex items-center gap-2">
             <span className="text-[10px] text-[var(--text-muted)]">Lọc:</span>
             <span
-                className={`
-          text-[10px] px-2 py-0.5 rounded-full border
-          ${sources.length === 0
+                className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                    sources.length === 0
                         ? 'border-[var(--border-color)] text-[var(--text-muted)]'
                         : 'border-[var(--accent)]/20 bg-[var(--accent-soft)] text-[var(--accent)]'
-                    }
-        `}
+                }`}
                 title={sources.length === 0 ? 'Tất cả nguồn' : sources.join(', ')}
             >
                 {sources.length === 0 ? 'Tất cả nguồn' : `${sources.length} nguồn`}
             </span>
             <span
-                className={`
-          text-[10px] px-2 py-0.5 rounded-full border
-          ${categories.length === 0
+                className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                    categories.length === 0
                         ? 'border-[var(--border-color)] text-[var(--text-muted)]'
                         : 'border-[var(--accent)]/20 bg-[var(--accent-soft)] text-[var(--accent)]'
-                    }
-        `}
+                }`}
                 title={categories.length === 0 ? 'Tất cả chủ đề' : categories.join(', ')}
             >
                 {categories.length === 0 ? 'Tất cả chủ đề' : `${categories.length} chủ đề`}
@@ -260,7 +316,7 @@ function FilterPills({ filters, onClear }) {
                 <button
                     type="button"
                     onClick={onClear}
-                    className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors focus:ring-2 focus:ring-[var(--ring)]"
+                    className="text-[10px] px-4 py-2 rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors focus:ring-2 focus:ring-[var(--ring)] min-h-[44px] flex items-center justify-center"
                     title="Xóa tất cả bộ lọc"
                 >
                     Xóa lọc
@@ -271,7 +327,6 @@ function FilterPills({ filters, onClear }) {
 }
 
 function BackgroundDecor() {
-    // Decorative shapes to complement the CSS gradient background.
     return (
         <>
             <div

@@ -12,7 +12,7 @@ venv/
 env/
 
 # Data/model cache – không cần trong image, được mount qua volume
-chroma_data/
+faiss_data/
 *.db
 
 # Logs

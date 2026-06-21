@@ -1,93 +1,86 @@
-# News RAG Chatbot
+# Vietnamese News RAG Chatbot
 
-Chatbot hỏi đáp tin tức tiếng Việt sử dụng kỹ thuật RAG (Retrieval-Augmented Generation). Hỗ trợ trả lời câu hỏi dựa trên tập dữ liệu tin tức được tự động thu thập từ 3 nguồn báo: **VnExpress**, **Tuổi Trẻ**, và **Thanh Niên**.
+Chatbot hỏi đáp tin tức tiếng Việt sử dụng RAG (Retrieval-Augmented Generation). Hỗ trợ trả lời câu hỏi dựa trên tin tức được thu thập tự động từ 3 nguồn báo: **VnExpress**, **Tuổi Trẻ**, và **Thanh Niên**.
 
 ---
 
-## Kiến trúc Hệ thống
+## Tech Stack
 
 - **Frontend:** React + TailwindCSS (Vite)
 - **Backend:** FastAPI (Python)
-  - **Crawler:** Thu thập tin tức qua RSS feeds (tự động cập nhật mỗi 60 phút).
-  - **Vector DB:** ChromaDB (Lưu trữ và tìm kiếm vector).
-  - **Embedder:** `text-embedding-3-small` (OpenAI).
-  - **LLM:** `gpt-4o-mini` (Mặc định) / `claude-3-5-haiku` (Dự phòng).
+  - **Vector DB:** FAISS (semantic search)
+  - **Embedding:** OpenAI `text-embedding-3-small`
+  - **LLM:** `gpt-4o-mini` (fallback: Claude Haiku)
+  - **Crawler:** RSS feeds (tự động mỗi 60 phút)
+  - **Scheduler:** APScheduler
+- **Deployment:** Docker + docker-compose
 
 ---
 
-## Yêu cầu Môi trường
-
-- **Python** 3.10+
-- **Node.js** 18+
-- API Key: `OPENAI_API_KEY` (Bắt buộc), `ANTHROPIC_API_KEY` (Trường hợp muốn dùng fallback)
-
----
-
-## Hướng dẫn Cài đặt & Khởi chạy
-
-### 1. Khởi động Backend (FastAPI)
+## Quick Start (Recommended)
 
 ```bash
-cd backend
+# Clone & cd vào project
+cd Chatbot-KHDL
 
-# Tạo thư mục môi trường ảo và kích hoạt
-python -m venv venv
-venv\Scripts\activate
+# Deploy với Docker (tất cả dependencies được tự động cài)
+docker-compose up --build
 
-# Cài đặt các thư viện phụ thuộc
-pip install -r requirements.txt
-
-# Tạo và cấu hình biến môi trường
-copy .env.example .env
-# Lưu ý: Mở file .env và điền đầy đủ các API key
-
-# Khởi chạy server
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Truy cập:
+# - Frontend: http://localhost:5173
+# - Backend API: http://localhost:8000
+# - API Docs: http://localhost:8000/docs
 ```
-- **Backend URL:** `http://localhost:8000`
-- **Swagger API Docs:** `http://localhost:8000/docs`
-
-### 2. Khởi động Frontend (React)
-
-```bash
-cd frontend
-
-# Cài đặt dependencies
-npm install
-
-# Khởi chạy dev server
-npm run dev
-```
-- **Frontend URL:** `http://localhost:5173`
 
 ---
 
-## API Endpoints Chính
+## API Endpoints
 
 | Method | Endpoint | Mô tả |
 | :--- | :--- | :--- |
-| `POST` | `/chat` | Gửi câu hỏi, nhận câu trả lời và danh sách nguồn trích dẫn |
-| `GET` | `/stats` | Xem thống kê số bài báo và chunk đang có trong DB |
-| `GET` | `/health` | Kiểm tra trạng thái sống của server |
+| `POST` | `/chat` | Gửi câu hỏi, nhận câu trả lời và nguồn trích dẫn |
+| `GET` | `/stats` | Thống kê số bài báo/chunk trong database |
+| `GET` | `/health` | Health check |
+| `POST` | `/stt` | Speech-to-text (Whisper API) |
 
-**Ví dụ Payload cho `/chat`:**
-```json
-{
-  "question": "Cho tôi biết các tin tức công nghệ mới nhất?",
-  "filters": {
-    "sources": ["VnExpress"],
-    "categories": ["Cong nghe"]
-  }
-}
+---
+
+## Nguồn dữ liệu
+
+| Chủ đề | VnExpress | Tuổi Trẻ | Thanh Niên |
+| :--- | :---: | :---: | :---: |
+| Công nghệ | ✓ | ✓ | ✓ |
+| Kinh tế | ✓ | ✓ | ✓ |
+| Thể thao | ✓ | ✓ | ✓ |
+| Thế giới | ✓ | ✓ | ✓ |
+
+---
+
+## Cấu hình Environment
+
+Tạo file `backend/.env` từ `.env.example`:
+
+```env
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-...  # optional (fallback)
+CRAWLER_INTERVAL_MINUTES=60
+LOG_LEVEL=INFO
 ```
 
 ---
 
-## Danh mục Dữ liệu Hỗ trợ (RSS)
+## Development (Local)
 
-| Chủ đề | VnExpress | Tuổi Trẻ | Thanh Niên |
-| :--- | :---: | :---: | :---: |
-| **Công nghệ** | x | x | x |
-| **Kinh tế** | x | x | x |
-| **Thể thao** | x | x | x |
-| **Thế giới** | x | x | x |
+```bash
+# Backend
+cd backend
+python -m venv venv
+venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Frontend 
+cd frontend
+npm install
+npm run dev
+```

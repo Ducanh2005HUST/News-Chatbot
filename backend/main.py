@@ -1,20 +1,25 @@
 from __future__ import annotations
 
+import os
 import asyncio
 import logging
 import functools
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Thread
 
+# Fix OMP error on Windows - prevent duplicate OpenMP runtime
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
 from chatbot import chat
 from crawler import run_crawl
-from embedder import embed_articles, get_stats
+from faiss_embedder import embed_articles, get_stats
 from models import ChatRequest, ChatResponse, StatsResponse
 from stt_engine import transcribe_audio
 
@@ -33,19 +38,24 @@ def _crawl_and_embed() -> None:
         if articles:
             embed_articles(articles)
             _total_articles += len(articles)
-        _last_crawled_at = datetime.utcnow().isoformat()
+        _last_crawled_at = datetime.now(timezone.utc).isoformat()
         logger.info(
             "Crawl+embed cycle complete – %d new articles, %d total",
             len(articles),
             _total_articles,
         )
     except Exception as exc:
-        logger.error("Crawl+embed cycle failed: %s", exc)
+        import traceback
+        logger.error("Crawl+embed cycle failed: %s\\n%s", exc, traceback.format_exc())
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     config.setup_logging()
     logger.info("Dang khoi dong Chatbot Tin tuc RAG ...")
+
+    # Initialize FAISS index and load existing data
+    from faiss_embedder import init_index
+    init_index()
 
     initial_thread = Thread(target=_crawl_and_embed, daemon=True)
     initial_thread.start()
@@ -83,14 +93,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest):
+@app.post("/chat")
+async def chat_endpoint(
+    request: ChatRequest,
+    stream: bool = Query(False, description="Stream response token by token")
+):
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
     try:
-        response = chat(request)
-        return response
+        if stream:
+            from chatbot import chat_stream
+            return StreamingResponse(
+                chat_stream(request),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",  # Disable nginx buffering
+                    "Connection": "keep-alive",
+                },
+            )
+        else:
+            response = chat(request)
+            return response
     except Exception as exc:
         logger.error("Chat endpoint error: %s", exc)
         raise HTTPException(
